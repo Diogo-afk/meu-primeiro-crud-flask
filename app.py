@@ -1,84 +1,96 @@
 import csv
-import os  # Adicione esta importação no topo
-from flask import Flask, render_template, request, redirect
+import os
+from flask import Flask, render_template, request, redirect, url_for, session
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+# CHAVE DE SEGURANÇA: Necessária para usar 'session'
+app.secret_key = 'chave_secreta_para_desenvolvimento' 
 
-# ... (mantenha as outras rotas igual)
-
-@app.route('/excluir/<nome>')
-def excluir(nome):
-    linhas_restantes = []
-    
-    # Passo 1: Ler todos, exceto o que queremos apagar
-    try:
-        with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
-            leitor = csv.reader(arquivo)
-            for linha in leitor:
-                if linha and linha[0] != nome:
-                    linhas_restantes.append(linha)
-        
-        # Passo 2: Sobrescrever o arquivo com a nova lista
-        with open('usuarios.csv', mode='w', newline='', encoding='utf-8') as arquivo:
-            escritor = csv.writer(arquivo)
-            escritor.writerows(linhas_restantes)
-            
-    except FileNotFoundError:
-        pass
-
-    return redirect('/lista')
-
-
+# --- ROTA: CADASTRO (PÁGINA INICIAL) ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# --- ROTA: PROCESSAR CADASTRO ---
 @app.route('/cadastrar', methods=['POST'])
 def cadastrar():
-    nome_novo = request.form.get('nome').strip() # .strip() remove espaços extras
-    senha_nova = request.form.get('senha')
+    nome = request.form.get('nome').strip()
+    senha = request.form.get('senha')
+    senha_hash = generate_password_hash(senha)
 
-    # Passo 1: Verificar se o usuário já existe
-    usuario_existe = False
+    # Verifica se usuário já existe
     try:
         with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
             leitor = csv.reader(arquivo)
             for linha in leitor:
-                if linha and linha[0].lower() == nome_novo.lower():
-                    usuario_existe = True
-                    break
+                if linha and linha[0].lower() == nome.lower():
+                    return "<h1>Erro!</h1><p>Usuário já existe.</p><a href='/'>Voltar</a>"
     except FileNotFoundError:
-        pass # Se o arquivo não existir, o usuário certamente não existe
+        pass
 
-    # Passo 2: Decidir se salva ou se avisa o erro
-    if usuario_existe:
-        return f"<h1>Erro!</h1><p>O usuário <b>{nome_novo}</b> já está cadastrado.</p><a href='/'>Tentar outro nome</a>"
-    
-    # Se não existe, salvamos normalmente
+    # Salva no arquivo
     with open('usuarios.csv', mode='a', newline='', encoding='utf-8') as arquivo:
         escritor = csv.writer(arquivo)
-        escritor.writerow([nome_novo, senha_nova])
+        escritor.writerow([nome, senha_hash])
 
-    return redirect('/lista') # Agora ele pula direto para a lista após salvar
+    # PONTO DE ATENÇÃO 2: Login automático após cadastrar
+    session['usuario_logado'] = nome
+    return redirect(url_for('ver_lista'))
 
+# --- ROTA: LOGIN (PÁGINA) ---
+@app.route('/login')
+def login_pagina():
+    return render_template('login.html')
+
+# --- ROTA: PROCESSAR LOGIN ---
+@app.route('/logar', methods=['POST'])
+def logar():
+    nome_digitado = request.form.get('nome').strip()
+    senha_digitada = request.form.get('senha')
+
+    usuario_encontrado = None
+    try:
+        with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
+            leitor = csv.reader(arquivo)
+            for linha in leitor:
+                if linha and linha[0].lower() == nome_digitado.lower():
+                    usuario_encontrado = {"nome": linha[0], "hash": linha[1]}
+                    break
+    except FileNotFoundError:
+        return "<h1>Erro!</h1><p>Nenhum usuário no sistema.</p>"
+
+    # Verifica senha com check_password_hash
+    if usuario_encontrado and check_password_hash(usuario_encontrado['hash'], senha_digitada):
+        session['usuario_logado'] = usuario_encontrado['nome']
+        return redirect(url_for('ver_lista'))
+    else:
+        return "<h1>Erro!</h1><p>Senha ou usuário incorretos.</p><a href='/login'>Tentar de novo</a>"
+
+# --- ROTA: LISTAGEM (PROTEGIDA) ---
 @app.route('/lista')
 def ver_lista():
+    # PONTO DE ATENÇÃO 1: Trava de segurança
+    if 'usuario_logado' not in session:
+        return redirect(url_for('login_pagina'))
+
     usuarios = []
     try:
         with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
             leitor = csv.reader(arquivo)
             for linha in leitor:
-                # Cada 'linha' é uma lista como ['joao', '123']
-                usuarios.append({"nome": linha[0], "senha": linha[1]})
+                if linha:
+                    usuarios.append({"nome": linha[0], "senha": linha[1]})
     except FileNotFoundError:
-        # Se o arquivo ainda não existir, a lista continua vazia
         pass
-
     return render_template('lista.html', lista_usuarios=usuarios)
 
+# --- ROTA: EDITAR (PROTEGIDA) ---
 @app.route('/editar/<nome_antigo>')
 def editar_pagina(nome_antigo):
-    # Procura os dados atuais desse usuário para mostrar no formulário
+    if 'usuario_logado' not in session:
+        return redirect(url_for('login_pagina'))
+
     usuario_atual = None
     with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
         leitor = csv.reader(arquivo)
@@ -88,30 +100,57 @@ def editar_pagina(nome_antigo):
                 break
     return render_template('editar.html', usuario=usuario_atual)
 
+# --- ROTA: ATUALIZAR (PROTEGIDA) ---
 @app.route('/atualizar', methods=['POST'])
 def atualizar():
-    nome_original = request.form.get('nome_original') # Nome antes da mudança
-    novo_nome = request.form.get('nome').strip()
-    nova_senha = request.form.get('senha')
+    if 'usuario_logado' not in session:
+        return redirect(url_for('login_pagina'))
 
-    linhas_atualizadas = []
+    nome_original = request.form.get('nome_original')
+    novo_nome = request.form.get('nome').strip()
+    nova_senha_hash = generate_password_hash(request.form.get('senha'))
+
+    linhas = []
     with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
         leitor = csv.reader(arquivo)
         for linha in leitor:
             if linha:
                 if linha[0] == nome_original:
-                    # Se for o usuário que queremos mudar, salvamos os novos dados
-                    linhas_atualizadas.append([novo_nome, nova_senha])
+                    linhas.append([novo_nome, nova_senha_hash])
                 else:
-                    # Se não for, mantemos o que já estava lá
-                    linhas_atualizadas.append(linha)
+                    linhas.append(linha)
 
-    # Salva tudo de volta no arquivo
     with open('usuarios.csv', mode='w', newline='', encoding='utf-8') as arquivo:
         escritor = csv.writer(arquivo)
-        escritor.writerows(linhas_atualizadas)
+        escritor.writerows(linhas)
+    return redirect(url_for('ver_lista'))
 
-    return redirect('/lista')
+# --- ROTA: EXCLUIR (PROTEGIDA) ---
+@app.route('/excluir/<nome>')
+def excluir(nome):
+    if 'usuario_logado' not in session:
+        return redirect(url_for('login_pagina'))
+
+    linhas = []
+    try:
+        with open('usuarios.csv', mode='r', encoding='utf-8') as arquivo:
+            leitor = csv.reader(arquivo)
+            for linha in leitor:
+                if linha and linha[0] != nome:
+                    linhas.append(linha)
+        
+        with open('usuarios.csv', mode='w', newline='', encoding='utf-8') as arquivo:
+            escritor = csv.writer(arquivo)
+            escritor.writerows(linhas)
+    except FileNotFoundError:
+        pass
+    return redirect(url_for('ver_lista'))
+
+# --- ROTA: LOGOUT ---
+@app.route('/logout')
+def logout():
+    session.pop('usuario_logado', None)
+    return redirect(url_for('login_pagina'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="cadastro-container">
+        <h2>Entrar no Sistema</h2>
+        <form action="/logar" method="POST">
+            <div class="input-group">
+                <label for="nome">Nome de Usuário</label>
+                <input type="text" id="nome" name="nome" placeholder="Digite seu nome" required>
+            </div>
+            <div class="input-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+            </div>
+            <button type="submit" class="btn-salvar">Entrar</button>
+            <p style="text-align: center; margin-top: 15px;">
+                Não tem conta? <a href="/">Cadastre-se</a>
+            </p>
+        </form>
+    </div>
+</body>
+</html>
