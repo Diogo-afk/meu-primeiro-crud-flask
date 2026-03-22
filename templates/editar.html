@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Usuário</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="cadastro-container">
+        <h2>Editar Cadastro</h2>
+        <form action="/atualizar" method="POST">
+            <input type="hidden" name="nome_original" value="{{ usuario.nome }}">
+
+            <div class="input-group">
+                <label>Nome</label>
+                <input type="text" name="nome" value="{{ usuario.nome }}" required>
+            </div>
+
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="text" name="senha" value="{{ usuario.senha }}" required>
+            </div>
+
+            <button type="submit" class="btn-salvar">Salvar Alterações</button>
+            <a href="/lista" style="display:block; text-align:center; margin-top:10px;">Cancelar</a>
+        </form>
+    </div>
+</body>
+</html>
