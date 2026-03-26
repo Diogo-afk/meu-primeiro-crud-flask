@@ -2,51 +2,50 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Usuários</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Painel Administrativo</title>
+    <!-- Link do Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="cadastro-container" style="max-width: 800px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2>Usuários do Sistema</h2>
-            <a href="/logout" style="color: #e74c3c; text-decoration: none; font-weight: bold; border: 1px solid #e74c3c; padding: 5px 10px; border-radius: 5px;">Sair</a>
-        </div>
+<body class="bg-light"> <!-- bg-light deixa o fundo cinza clarinho moderno -->
 
-        <table border="1" style="width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: white;">
-            <thead>
-                <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 12px;">Nome</th>
-                    <th style="padding: 12px;">Senha (Hash)</th>
-                    <th style="padding: 12px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for usuario in lista_usuarios %}
-                <tr>
-                    <td style="padding: 10px; text-align: center; font-weight: bold;">{{ usuario.nome }}</td>
-                    <td style="padding: 10px; text-align: center; color: #666; font-size: 0.8em;">
-                        <div style="width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 auto;">
-                            {{ usuario.senha }}
-                        </div>
-                    </td>
-                    <td style="padding: 10px; text-align: center;">
-                        <a href="/editar/{{ usuario.nome }}" style="color: #2980b9; text-decoration: none; font-weight: bold; margin-right: 15px;">Editar</a>
-                        
-                        <a href="/excluir/{{ usuario.nome }}" 
-                           style="color: #c0392b; text-decoration: none; font-weight: bold;"
-                           onclick="return confirm('Tem certeza que deseja excluir {{ usuario.nome }}?')">
-                           Excluir
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <div style="text-align: center;">
-            <a href="/" style="color: #27ae60; text-decoration: none; font-weight: bold;">+ Cadastrar Novo Usuário</a>
+    <div class="container mt-5">
+        <div class="card shadow"> <!-- Card com sombra branca -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Usuários Cadastrados</h3>
+                <a href="/logout" class="btn btn-danger btn-sm">Sair</a>
+            </div>
+            
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Hash da Senha</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in lista_usuarios %}
+                        <tr>
+                            <td class="align-middle"><strong>{{ usuario.nome }}</strong></td>
+                            <td class="align-middle text-muted small">
+                                <code>{{ usuario.senha[:20] }}...</code>
+                            </td>
+                            <td class="text-center">
+                                <a href="/editar/{{ usuario.nome }}" class="btn btn-warning btn-sm">Editar</a>
+                                <a href="/excluir/{{ usuario.nome }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Excluir?')">Excluir</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="mt-4 text-center">
+                    <a href="/" class="btn btn-success">+ Novo Cadastro</a>
+                </div>
+            </div>
         </div>
     </div>
+
 </body>
 </html>

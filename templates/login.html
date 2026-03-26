@@ -2,26 +2,39 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Acessar Sistema</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .card-login { max-width: 400px; margin-top: 100px; border-radius: 20px; }
+    </style>
 </head>
 <body>
-    <div class="cadastro-container">
-        <h2>Entrar no Sistema</h2>
-        <form action="/logar" method="POST">
-            <div class="input-group">
-                <label for="nome">Nome de Usuário</label>
-                <input type="text" id="nome" name="nome" placeholder="Digite seu nome" required>
+
+    <div class="container d-flex justify-content-center">
+        <div class="card card-login shadow-sm w-100">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4 fw-bold">Login</h2>
+                
+                <form action="/logar" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Usuário</label>
+                        <input type="text" name="nome" class="form-control" placeholder="Digite seu usuário" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Senha</label>
+                        <input type="password" name="senha" class="form-control" placeholder="Digite sua senha" required>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 py-2">Entrar no Sistema</button>
+                </form>
+
+                <hr class="my-4">
+                <p class="text-center mb-0">
+                    Novo por aqui? <a href="/" class="link-primary fw-bold text-decoration-none">Criar uma conta</a>
+                </p>
             </div>
-            <div class="input-group">
-                <label for="senha">Senha</label>
-                <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
-            </div>
-            <button type="submit" class="btn-salvar">Entrar</button>
-            <p style="text-align: center; margin-top: 15px;">
-                Não tem conta? <a href="/">Cadastre-se</a>
-            </p>
-        </form>
+        </div>
     </div>
+
 </body>
 </html>
