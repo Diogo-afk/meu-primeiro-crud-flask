@@ -33,7 +33,11 @@
                             </td>
                             <td class="text-center">
                                 <a href="/editar/{{ usuario.nome }}" class="btn btn-warning btn-sm">Editar</a>
-                                <a href="/excluir/{{ usuario.nome }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('Excluir?')">Excluir</a>
+                                <a href="/excluir/{{ usuario.nome }}" 
+                                    class="btn btn-outline-danger btn-sm" 
+                                    onclick="return confirmarExclusao('{{ usuario.nome }}')">
+                                    Excluir
+                                </a>                            
                             </td>
                         </tr>
                         {% endfor %}
@@ -46,6 +50,16 @@
             </div>
         </div>
     </div>
+
+    <script>
+    // Função para dar um alerta visual antes de deletar
+    function confirmarExclusao(nome) {
+        if (confirm("Tem certeza que deseja excluir o usuário " + nome + "?")) {
+            return true;
+        }
+        return false;
+    }
+    </script>
 
 </body>
 </html>
